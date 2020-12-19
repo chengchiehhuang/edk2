@@ -123,10 +123,13 @@ BlDxeEntryPoint (
   //
   // Install Acpi Table
   //
-  if (SystemTableInfo->AcpiTableBase != 0 && SystemTableInfo->AcpiTableSize != 0) {
+  if (SystemTableInfo->AcpiTableBase != 0) {
     DEBUG ((DEBUG_ERROR, "Install Acpi Table at 0x%lx, length 0x%x\n", SystemTableInfo->AcpiTableBase, SystemTableInfo->AcpiTableSize));
     Status = gBS->InstallConfigurationTable (&gEfiAcpiTableGuid, (VOID *)(UINTN)SystemTableInfo->AcpiTableBase);
     ASSERT_EFI_ERROR (Status);
+  }
+  else{
+    DEBUG ((DEBUG_ERROR, "========Install Acpi Table failed\n"));
   }
 
   //
@@ -136,6 +139,9 @@ BlDxeEntryPoint (
     DEBUG ((DEBUG_ERROR, "Install Smbios Table at 0x%lx, length 0x%x\n", SystemTableInfo->SmbiosTableBase, SystemTableInfo->SmbiosTableSize));
     Status = gBS->InstallConfigurationTable (&gEfiSmbiosTableGuid, (VOID *)(UINTN)SystemTableInfo->SmbiosTableBase);
     ASSERT_EFI_ERROR (Status);
+  }
+  else{
+    DEBUG ((DEBUG_ERROR, "========Install Smbios Table failed\n"));
   }
 
   //
@@ -153,6 +159,9 @@ BlDxeEntryPoint (
     Status = PcdSet32S (PcdSetupVideoVerticalResolution, GfxInfo->GraphicsMode.VerticalResolution);
     ASSERT_EFI_ERROR (Status);
   }
+  else {
+    DEBUG ((DEBUG_INFO, "========No Graphics Infor hob failed\n"));
+  }
 
   //
   // Set PcdPciExpressBaseAddress and PcdPciExpressBaseSize by HOB info
@@ -164,6 +173,9 @@ BlDxeEntryPoint (
     ASSERT_EFI_ERROR (Status);
     Status = PcdSet64S (PcdPciExpressBaseSize, AcpiBoardInfo->PcieBaseSize);
     ASSERT_EFI_ERROR (Status);
+  }
+  else {
+    DEBUG ((DEBUG_INFO, "========No AcpiBoardInfo\n"));
   }
 
   return EFI_SUCCESS;

@@ -49,9 +49,11 @@
   BaseMemoryLib
   DebugLib
   BaseLib
+  PciCf8Lib
   SerialPortLib
   IoLib
   BlParseLib
+  MtrrLib
   HobLib
   PeCoffLib
   PlatformSupportLib

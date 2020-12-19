@@ -40,6 +40,7 @@ HandOffToDxeCore (
   UINTN                           PageTables;
   VOID                            *GhcbBase;
   UINTN                           GhcbSize;
+  DEBUG((DEBUG_INFO, "Handoff 0\n"));
 
   //
   // Clear page 0 and mark it as allocated if NULL pointer detection is enabled.
@@ -62,12 +63,13 @@ HandOffToDxeCore (
   //
   TopOfStack = (VOID *) ((UINTN) BaseOfStack + EFI_SIZE_TO_PAGES (STACK_SIZE) * EFI_PAGE_SIZE - CPU_STACK_ALIGNMENT);
   TopOfStack = ALIGN_POINTER (TopOfStack, CPU_STACK_ALIGNMENT);
+  DEBUG((DEBUG_INFO, "Handoff 3\n"));
 
   //
   // Get the address and size of the GHCB pages
   //
-  GhcbBase = (VOID *) PcdGet64 (PcdGhcbBase);
-  GhcbSize = PcdGet64 (PcdGhcbSize);
+  // GhcbBase = (VOID *) PcdGet64 (PcdGhcbBase);
+  // GhcbSize = PcdGet64 (PcdGhcbSize);
 
   PageTables = 0;
   if (FeaturePcdGet (PcdDxeIplBuildPageTables)) {

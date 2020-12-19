@@ -18,6 +18,7 @@
 #include <Library/PeCoffLib.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
+#include <Library/PciCf8Lib.h>
 #include <Guid/MemoryAllocationHob.h>
 #include <Library/IoLib.h>
 #include <Library/PeCoffLib.h>
@@ -25,6 +26,7 @@
 #include <Library/PlatformSupportLib.h>
 #include <Library/UefiCpuLib.h>
 #include <IndustryStandard/Acpi.h>
+#include <IndustryStandard/Q35MchIch9.h>
 #include <IndustryStandard/MemoryMappedConfigurationSpaceAccessTable.h>
 #include <Guid/SerialPortInfoGuid.h>
 #include <Guid/SystemTableInfoGuid.h>

@@ -1,22 +1,21 @@
 /** @file
-  This library will parse the coreboot table in memory and extract those required
-  information.
+  This library will parse the coreboot table in memory and extract those
+required information.
 
   Copyright (c) 2014 - 2016, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include <Uefi/UefiBaseType.h>
+#include <Coreboot.h>
+#include <IndustryStandard/Acpi.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/DebugLib.h>
-#include <Library/PcdLib.h>
-#include <Library/IoLib.h>
 #include <Library/BlParseLib.h>
-#include <IndustryStandard/Acpi.h>
-#include <Coreboot.h>
-
+#include <Library/DebugLib.h>
+#include <Library/IoLib.h>
+#include <Library/PcdLib.h>
+#include <Uefi/UefiBaseType.h>
 
 /**
   Convert a packed value from cbuint64 to a UINT64 value.
@@ -27,13 +26,7 @@
 
 **/
 UINT64
-cb_unpack64 (
-  IN struct cbuint64 val
-  )
-{
-  return LShiftU64 (val.hi, 32) | val.lo;
-}
-
+cb_unpack64(IN struct cbuint64 val) { return LShiftU64(val.hi, 32) | val.lo; }
 
 /**
   Returns the sum of all elements in a buffer of 16-bit values.  During
@@ -42,24 +35,21 @@ cb_unpack64 (
   @param  Buffer      The pointer to the buffer to carry out the sum operation.
   @param  Length      The size, in bytes, of Buffer.
 
-  @return Sum         The sum of Buffer with carry bits included during additions.
+  @return Sum         The sum of Buffer with carry bits included during
+additions.
 
 **/
 UINT16
-CbCheckSum16 (
-  IN UINT16   *Buffer,
-  IN UINTN    Length
-  )
-{
-  UINT32      Sum;
-  UINT32      TmpValue;
-  UINTN       Idx;
-  UINT8       *TmpPtr;
+CbCheckSum16(IN UINT16 *Buffer, IN UINTN Length) {
+  UINT32 Sum;
+  UINT32 TmpValue;
+  UINTN Idx;
+  UINT8 *TmpPtr;
 
   Sum = 0;
   TmpPtr = (UINT8 *)Buffer;
-  for(Idx = 0; Idx < Length; Idx++) {
-    TmpValue  = TmpPtr[Idx];
+  for (Idx = 0; Idx < Length; Idx++) {
+    TmpValue = TmpPtr[Idx];
     if (Idx % 2 == 1) {
       TmpValue <<= 8;
     }
@@ -75,7 +65,6 @@ CbCheckSum16 (
   return (UINT16)((~Sum) & 0xFFFF);
 }
 
-
 /**
   Check the coreboot table if it is valid.
 
@@ -86,11 +75,8 @@ CbCheckSum16 (
 
 **/
 BOOLEAN
-IsValidCbTable (
-  IN struct cb_header   *Header
-  )
-{
-  UINT16                 CheckSum;
+IsValidCbTable(IN struct cb_header *Header) {
+  UINT16 CheckSum;
 
   if ((Header == NULL) || (Header->table_bytes == 0)) {
     return FALSE;
@@ -103,49 +89,46 @@ IsValidCbTable (
   //
   // Check the checksum of the coreboot table header
   //
-  CheckSum = CbCheckSum16 ((UINT16 *)Header, sizeof (*Header));
+  CheckSum = CbCheckSum16((UINT16 *)Header, sizeof(*Header));
   if (CheckSum != 0) {
-    DEBUG ((DEBUG_ERROR, "Invalid coreboot table header checksum\n"));
+    DEBUG((DEBUG_ERROR, "Invalid coreboot table header checksum\n"));
     return FALSE;
   }
 
-  CheckSum = CbCheckSum16 ((UINT16 *)((UINT8 *)Header + sizeof (*Header)), Header->table_bytes);
+  CheckSum = CbCheckSum16((UINT16 *)((UINT8 *)Header + sizeof(*Header)),
+                          Header->table_bytes);
   if (CheckSum != Header->table_checksum) {
-    DEBUG ((DEBUG_ERROR, "Incorrect checksum of all the coreboot table entries\n"));
+    DEBUG((DEBUG_ERROR,
+           "Incorrect checksum of all the coreboot table entries\n"));
     return FALSE;
   }
 
   return TRUE;
 }
 
-
 /**
   This function retrieves the parameter base address from boot loader.
 
   This function will get bootloader specific parameter address for UEFI payload.
-  e.g. HobList pointer for Slim Bootloader, and coreboot table header for Coreboot.
+  e.g. HobList pointer for Slim Bootloader, and coreboot table header for
+Coreboot.
 
   @retval NULL            Failed to find the GUID HOB.
   @retval others          GUIDed HOB data pointer.
 
 **/
-VOID *
-EFIAPI
-GetParameterBase (
-  VOID
-  )
-{
-  struct cb_header   *Header;
-  struct cb_record   *Record;
-  UINT8              *TmpPtr;
-  UINT8              *CbTablePtr;
-  UINTN              Idx;
+VOID *EFIAPI GetParameterBase(VOID) {
+  struct cb_header *Header;
+  struct cb_record *Record;
+  UINT8 *TmpPtr;
+  UINT8 *CbTablePtr;
+  UINTN Idx;
 
   //
   // coreboot could pass coreboot table to UEFI payload
   //
-  Header = (struct cb_header *)(UINTN)GET_BOOTLOADER_PARAMETER ();
-  if (IsValidCbTable (Header)) {
+  Header = (struct cb_header *)(UINTN)GET_BOOTLOADER_PARAMETER();
+  if (IsValidCbTable(Header)) {
     return Header;
   }
 
@@ -168,7 +151,7 @@ GetParameterBase (
   //
   // Check the coreboot header
   //
-  if (!IsValidCbTable (Header)) {
+  if (!IsValidCbTable(Header)) {
     return NULL;
   }
 
@@ -189,15 +172,14 @@ GetParameterBase (
   //
   // Check the coreboot header in high memory
   //
-  if (!IsValidCbTable ((struct cb_header *)CbTablePtr)) {
+  if (!IsValidCbTable((struct cb_header *)CbTablePtr)) {
     return NULL;
   }
 
-  SET_BOOTLOADER_PARAMETER ((UINT32)(UINTN)CbTablePtr);
+  SET_BOOTLOADER_PARAMETER((UINT32)(UINTN)CbTablePtr);
 
   return CbTablePtr;
 }
-
 
 /**
   Find coreboot record with given Tag.
@@ -208,18 +190,16 @@ GetParameterBase (
   @retval Others            The pointer to the record found.
 
 **/
-VOID *
-FindCbTag (
-  IN  UINT32         Tag
-  )
-{
-  struct cb_header   *Header;
-  struct cb_record   *Record;
-  UINT8              *TmpPtr;
-  UINT8              *TagPtr;
-  UINTN              Idx;
+VOID *FindCbTag(IN UINT32 Tag) {
+  struct cb_header *Header;
+  struct cb_record *Record;
+  UINT8 *TmpPtr;
+  UINT8 *TagPtr;
+  UINTN Idx;
 
-  Header = (struct cb_header *) GetParameterBase ();
+  return NULL;
+
+  Header = (struct cb_header *)GetParameterBase();
 
   TagPtr = NULL;
   TmpPtr = (UINT8 *)Header + Header->header_bytes;
@@ -235,7 +215,6 @@ FindCbTag (
   return TagPtr;
 }
 
-
 /**
   Find the given table with TableId from the given coreboot memory Root.
 
@@ -250,16 +229,11 @@ FindCbTag (
 
 **/
 RETURN_STATUS
-FindCbMemTable (
-  IN  struct cbmem_root  *Root,
-  IN  UINT32             TableId,
-  OUT VOID               **MemTable,
-  OUT UINT32             *MemTableSize
-  )
-{
-  UINTN                  Idx;
-  BOOLEAN                IsImdEntry;
-  struct cbmem_entry     *Entries;
+FindCbMemTable(IN struct cbmem_root *Root, IN UINT32 TableId,
+               OUT VOID **MemTable, OUT UINT32 *MemTableSize) {
+  UINTN Idx;
+  BOOLEAN IsImdEntry;
+  struct cbmem_entry *Entries;
 
   if ((Root == NULL) || (MemTable == NULL)) {
     return RETURN_INVALID_PARAMETER;
@@ -283,16 +257,16 @@ FindCbMemTable (
   for (Idx = 0; Idx < Root->num_entries; Idx++) {
     if (Entries[Idx].id == TableId) {
       if (IsImdEntry) {
-        *MemTable = (VOID *) ((UINTN)Entries[Idx].start + (UINTN)Root);
+        *MemTable = (VOID *)((UINTN)Entries[Idx].start + (UINTN)Root);
       } else {
-        *MemTable = (VOID *) (UINTN)Entries[Idx].start;
+        *MemTable = (VOID *)(UINTN)Entries[Idx].start;
       }
       if (MemTableSize != NULL) {
         *MemTableSize = Entries[Idx].size;
       }
 
-      DEBUG ((DEBUG_INFO, "Find CbMemTable Id 0x%x, base %p, size 0x%x\n",
-        TableId, *MemTable, Entries[Idx].size));
+      DEBUG((DEBUG_INFO, "Find CbMemTable Id 0x%x, base %p, size 0x%x\n",
+             TableId, *MemTable, Entries[Idx].size));
       return RETURN_SUCCESS;
     }
   }
@@ -313,31 +287,27 @@ FindCbMemTable (
 
 **/
 RETURN_STATUS
-ParseCbMemTable (
-  IN  UINT32               TableId,
-  OUT VOID                 **MemTable,
-  OUT UINT32               *MemTableSize
-  )
-{
-  EFI_STATUS               Status;
-  struct cb_memory         *rec;
-  struct cb_memory_range   *Range;
-  UINT64                   Start;
-  UINT64                   Size;
-  UINTN                    Index;
-  struct cbmem_root        *CbMemRoot;
+ParseCbMemTable(IN UINT32 TableId, OUT VOID **MemTable,
+                OUT UINT32 *MemTableSize) {
+  EFI_STATUS Status;
+  struct cb_memory *rec;
+  struct cb_memory_range *Range;
+  UINT64 Start;
+  UINT64 Size;
+  UINTN Index;
+  struct cbmem_root *CbMemRoot;
 
   if (MemTable == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
 
   *MemTable = NULL;
-  Status    = RETURN_NOT_FOUND;
+  Status = RETURN_NOT_FOUND;
 
   //
   // Get the coreboot memory table
   //
-  rec = (struct cb_memory *)FindCbTag (CB_TAG_MEMORY);
+  rec = (struct cb_memory *)FindCbTag(CB_TAG_MEMORY);
   if (rec == NULL) {
     return Status;
   }
@@ -348,9 +318,10 @@ ParseCbMemTable (
     Size = cb_unpack64(Range->size);
 
     if ((Range->type == CB_MEM_TABLE) && (Start > 0x1000)) {
-      CbMemRoot = (struct  cbmem_root *)(UINTN)(Start + Size - DYN_CBMEM_ALIGN_SIZE);
-      Status = FindCbMemTable (CbMemRoot, TableId, MemTable, MemTableSize);
-      if (!EFI_ERROR (Status)) {
+      CbMemRoot =
+          (struct cbmem_root *)(UINTN)(Start + Size - DYN_CBMEM_ALIGN_SIZE);
+      Status = FindCbMemTable(CbMemRoot, TableId, MemTable, MemTableSize);
+      if (!EFI_ERROR(Status)) {
         break;
       }
     }
@@ -359,7 +330,15 @@ ParseCbMemTable (
   return Status;
 }
 
-
+void AddMemoryRange(IN BL_MEM_INFO_CALLBACK MemInfoCallback, IN UINTN start,
+                    IN UINTN end, IN int type) {
+  MEMROY_MAP_ENTRY MemoryMap;
+  MemoryMap.Base = start;
+  MemoryMap.Size = end - start + 1;
+  MemoryMap.Type = type;
+  MemoryMap.Flag = 0;
+  MemInfoCallback(&MemoryMap, NULL);
+}
 
 /**
   Acquire the memory information from the coreboot table in memory.
@@ -373,11 +352,8 @@ ParseCbMemTable (
 **/
 RETURN_STATUS
 EFIAPI
-ParseMemoryInfo (
-  IN  BL_MEM_INFO_CALLBACK  MemInfoCallback,
-  IN  VOID                  *Params
-  )
-{
+ParseMemoryInfo(IN BL_MEM_INFO_CALLBACK MemInfoCallback, IN VOID *Params) {
+  /*
   struct cb_memory         *rec;
   struct cb_memory_range   *Range;
   UINTN                    Index;
@@ -398,14 +374,62 @@ ParseMemoryInfo (
     MemoryMap.Type = (UINT8)Range->type;
     MemoryMap.Flag = 0;
     DEBUG ((DEBUG_INFO, "%d. %016lx - %016lx [%02x]\n",
-            Index, MemoryMap.Base, MemoryMap.Base + MemoryMap.Size - 1, MemoryMap.Type));
+            Index, MemoryMap.Base, MemoryMap.Base + MemoryMap.Size - 1,
+  MemoryMap.Type));
 
     MemInfoCallback (&MemoryMap, Params);
   }
+*/
 
+  /*
+  w/ ubuntu
+  [mem 0x0000000000000000-0x000000000009fbff] usable
+  [mem 0x000000000009fc00-0x000000000009ffff] reserved
+  [mem 0x00000000000f0000-0x00000000000fffff] reserved
+  [mem 0x0000000000100000-0x000000007ffd9fff] usable
+  [mem 0x000000007ffda000-0x000000007fffffff] reserved
+  [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+  w/o ubuntu
+  [mem 0x0000000000000000-0x000000000009fbff] usable
+  [mem 0x000000000009fc00-0x000000000009ffff] reserved
+  [mem 0x00000000000f0000-0x00000000000fffff] reserved
+  [mem 0x0000000000100000-0x000000007ffdcfff] usable
+  [mem 0x000000007ffdd000-0x000000007fffffff] reserved
+  [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+   * */
+  AddMemoryRange(MemInfoCallback, 0x0000000000000000, 0x000000000009efff,
+                 CB_MEM_RAM);
+  AddMemoryRange(MemInfoCallback, 0x000000000009f000, 0x000000000009ffff,
+                 CB_MEM_RESERVED);
+  AddMemoryRange(MemInfoCallback, 0x00000000000f0000, 0x00000000000fffff,
+                 CB_MEM_RESERVED);
+  // AddMemoryRange(MemInfoCallback, 0x0000000000100000, 0x000000007ffdcfff,
+  //                CB_MEM_RAM);
+  // AddMemoryRange(MemInfoCallback, 0x000000007ffdd000, 0x000000007fffffff,
+  //                CB_MEM_RESERVED);
+  AddMemoryRange(MemInfoCallback, 0x0000000000100000, 0x000000007ffd9fff,
+                 CB_MEM_RAM);
+  AddMemoryRange(MemInfoCallback, 0x000000007ffda000, 0x000000007fffffff,
+                 CB_MEM_RESERVED);
+
+  AddMemoryRange(MemInfoCallback, 0x00000000fffc0000, 0x00000000ffffffff,
+                 CB_MEM_RESERVED);
   return RETURN_SUCCESS;
 }
 
+ // " RSD PTR" in hex, 8 bytes.
+UINTN FindRsdpPtrInF000(){
+  UINTN base;
+  const UINT64 RsdpTag = 0x2052545020445352;
+  for (base = 0xF0000; base < 0x100000; base++) {
+    if (*(UINT64*)base == RsdpTag) {
+      DEBUG((DEBUG_INFO, "Found RSDP ptr in: 0x%08x\n", base));
+      return base;
+    }
+  }
+  DEBUG((DEBUG_INFO, "RSDP ptr not found in F0000\n"));
+  return 0xf5b20;
+}
 
 /**
   Acquire acpi table and smbios table from coreboot
@@ -418,31 +442,36 @@ ParseMemoryInfo (
 **/
 RETURN_STATUS
 EFIAPI
-ParseSystemTable (
-  OUT SYSTEM_TABLE_INFO     *SystemTableInfo
-  )
-{
-  EFI_STATUS       Status;
-  VOID             *MemTable;
-  UINT32           MemTableSize;
+ParseSystemTable(OUT SYSTEM_TABLE_INFO *SystemTableInfo) {
+  EFI_STATUS Status;
+  VOID *MemTable;
+  UINT32 MemTableSize;
+  UINTN RsdpPtr;
 
-  Status = ParseCbMemTable (SIGNATURE_32 ('T', 'B', 'M', 'S'), &MemTable, &MemTableSize);
-  if (EFI_ERROR (Status)) {
+  RsdpPtr = FindRsdpPtrInF000();
+
+  SystemTableInfo->AcpiTableBase = RsdpPtr;
+  SystemTableInfo->AcpiTableSize = 14;
+  return RETURN_SUCCESS;
+
+  Status = ParseCbMemTable(SIGNATURE_32('T', 'B', 'M', 'S'), &MemTable,
+                           &MemTableSize);
+  if (EFI_ERROR(Status)) {
     return EFI_NOT_FOUND;
   }
-  SystemTableInfo->SmbiosTableBase = (UINT64) (UINTN)MemTable;
+  SystemTableInfo->SmbiosTableBase = (UINT64)(UINTN)MemTable;
   SystemTableInfo->SmbiosTableSize = MemTableSize;
 
-  Status = ParseCbMemTable (SIGNATURE_32 ('I', 'P', 'C', 'A'), &MemTable, &MemTableSize);
-  if (EFI_ERROR (Status)) {
+  Status = ParseCbMemTable(SIGNATURE_32('I', 'P', 'C', 'A'), &MemTable,
+                           &MemTableSize);
+  if (EFI_ERROR(Status)) {
     return EFI_NOT_FOUND;
   }
-  SystemTableInfo->AcpiTableBase = (UINT64) (UINTN)MemTable;
+  SystemTableInfo->AcpiTableBase = (UINT64)(UINTN)MemTable;
   SystemTableInfo->AcpiTableSize = MemTableSize;
 
   return Status;
 }
-
 
 /**
   Find the serial port information
@@ -455,23 +484,26 @@ ParseSystemTable (
 **/
 RETURN_STATUS
 EFIAPI
-ParseSerialInfo (
-  OUT SERIAL_PORT_INFO     *SerialPortInfo
-  )
-{
-  struct cb_serial          *CbSerial;
+ParseSerialInfo(OUT SERIAL_PORT_INFO *SerialPortInfo) {
+  // struct cb_serial          *CbSerial;
 
-  CbSerial = FindCbTag (CB_TAG_SERIAL);
-  if (CbSerial == NULL) {
-    return RETURN_NOT_FOUND;
-  }
+  // CbSerial = FindCbTag (CB_TAG_SERIAL);
+  // if (CbSerial == NULL) {
+  //   return RETURN_NOT_FOUND;
+  // }
 
-  SerialPortInfo->BaseAddr    = CbSerial->baseaddr;
-  SerialPortInfo->RegWidth    = CbSerial->regwidth;
-  SerialPortInfo->Type        = CbSerial->type;
-  SerialPortInfo->Baud        = CbSerial->baud;
-  SerialPortInfo->InputHertz  = CbSerial->input_hertz;
-  SerialPortInfo->UartPciAddr = CbSerial->uart_pci_addr;
+  // SerialPortInfo->BaseAddr    = CbSerial->baseaddr;
+  // SerialPortInfo->RegWidth    = CbSerial->regwidth;
+  // SerialPortInfo->Type        = CbSerial->type;
+  // SerialPortInfo->Baud        = CbSerial->baud;
+  // SerialPortInfo->InputHertz  = CbSerial->input_hertz;
+  // SerialPortInfo->UartPciAddr = CbSerial->uart_pci_addr;
+  SerialPortInfo->BaseAddr = 0x3f8;
+  SerialPortInfo->RegWidth = 8;
+  SerialPortInfo->Type = PLD_SERIAL_TYPE_IO_MAPPED;
+  SerialPortInfo->Baud = 115200;
+  SerialPortInfo->InputHertz = 0;
+  SerialPortInfo->UartPciAddr = 0;
 
   return RETURN_SUCCESS;
 }
@@ -481,61 +513,67 @@ ParseSerialInfo (
 
   @param  GfxInfo             Pointer to the EFI_PEI_GRAPHICS_INFO_HOB structure
 
-  @retval RETURN_SUCCESS     Successfully find the video frame buffer information.
+  @retval RETURN_SUCCESS     Successfully find the video frame buffer
+information.
   @retval RETURN_NOT_FOUND   Failed to find the video frame buffer information .
 
 **/
 RETURN_STATUS
 EFIAPI
-ParseGfxInfo (
-  OUT EFI_PEI_GRAPHICS_INFO_HOB         *GfxInfo
-  )
-{
-  struct cb_framebuffer                 *CbFbRec;
-  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  *GfxMode;
+ParseGfxInfo(OUT EFI_PEI_GRAPHICS_INFO_HOB *GfxInfo) {
+  struct cb_framebuffer *CbFbRec;
+  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
 
   if (GfxInfo == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
 
-  CbFbRec = FindCbTag (CB_TAG_FRAMEBUFFER);
+  CbFbRec = FindCbTag(CB_TAG_FRAMEBUFFER);
   if (CbFbRec == NULL) {
     return RETURN_NOT_FOUND;
   }
 
-  DEBUG ((DEBUG_INFO, "Found coreboot video frame buffer information\n"));
-  DEBUG ((DEBUG_INFO, "physical_address: 0x%lx\n", CbFbRec->physical_address));
-  DEBUG ((DEBUG_INFO, "x_resolution: 0x%x\n", CbFbRec->x_resolution));
-  DEBUG ((DEBUG_INFO, "y_resolution: 0x%x\n", CbFbRec->y_resolution));
-  DEBUG ((DEBUG_INFO, "bits_per_pixel: 0x%x\n", CbFbRec->bits_per_pixel));
-  DEBUG ((DEBUG_INFO, "bytes_per_line: 0x%x\n", CbFbRec->bytes_per_line));
+  DEBUG((DEBUG_INFO, "Found coreboot video frame buffer information\n"));
+  DEBUG((DEBUG_INFO, "physical_address: 0x%lx\n", CbFbRec->physical_address));
+  DEBUG((DEBUG_INFO, "x_resolution: 0x%x\n", CbFbRec->x_resolution));
+  DEBUG((DEBUG_INFO, "y_resolution: 0x%x\n", CbFbRec->y_resolution));
+  DEBUG((DEBUG_INFO, "bits_per_pixel: 0x%x\n", CbFbRec->bits_per_pixel));
+  DEBUG((DEBUG_INFO, "bytes_per_line: 0x%x\n", CbFbRec->bytes_per_line));
 
-  DEBUG ((DEBUG_INFO, "red_mask_size: 0x%x\n", CbFbRec->red_mask_size));
-  DEBUG ((DEBUG_INFO, "red_mask_pos: 0x%x\n", CbFbRec->red_mask_pos));
-  DEBUG ((DEBUG_INFO, "green_mask_size: 0x%x\n", CbFbRec->green_mask_size));
-  DEBUG ((DEBUG_INFO, "green_mask_pos: 0x%x\n", CbFbRec->green_mask_pos));
-  DEBUG ((DEBUG_INFO, "blue_mask_size: 0x%x\n", CbFbRec->blue_mask_size));
-  DEBUG ((DEBUG_INFO, "blue_mask_pos: 0x%x\n", CbFbRec->blue_mask_pos));
-  DEBUG ((DEBUG_INFO, "reserved_mask_size: 0x%x\n", CbFbRec->reserved_mask_size));
-  DEBUG ((DEBUG_INFO, "reserved_mask_pos: 0x%x\n", CbFbRec->reserved_mask_pos));
+  DEBUG((DEBUG_INFO, "red_mask_size: 0x%x\n", CbFbRec->red_mask_size));
+  DEBUG((DEBUG_INFO, "red_mask_pos: 0x%x\n", CbFbRec->red_mask_pos));
+  DEBUG((DEBUG_INFO, "green_mask_size: 0x%x\n", CbFbRec->green_mask_size));
+  DEBUG((DEBUG_INFO, "green_mask_pos: 0x%x\n", CbFbRec->green_mask_pos));
+  DEBUG((DEBUG_INFO, "blue_mask_size: 0x%x\n", CbFbRec->blue_mask_size));
+  DEBUG((DEBUG_INFO, "blue_mask_pos: 0x%x\n", CbFbRec->blue_mask_pos));
+  DEBUG(
+      (DEBUG_INFO, "reserved_mask_size: 0x%x\n", CbFbRec->reserved_mask_size));
+  DEBUG((DEBUG_INFO, "reserved_mask_pos: 0x%x\n", CbFbRec->reserved_mask_pos));
 
   GfxMode = &GfxInfo->GraphicsMode;
-  GfxMode->Version              = 0;
+  GfxMode->Version = 0;
   GfxMode->HorizontalResolution = CbFbRec->x_resolution;
-  GfxMode->VerticalResolution   = CbFbRec->y_resolution;
-  GfxMode->PixelsPerScanLine    = (CbFbRec->bytes_per_line << 3) / CbFbRec->bits_per_pixel;
-  if ((CbFbRec->red_mask_pos == 0) && (CbFbRec->green_mask_pos == 8) && (CbFbRec->blue_mask_pos == 16)) {
+  GfxMode->VerticalResolution = CbFbRec->y_resolution;
+  GfxMode->PixelsPerScanLine =
+      (CbFbRec->bytes_per_line << 3) / CbFbRec->bits_per_pixel;
+  if ((CbFbRec->red_mask_pos == 0) && (CbFbRec->green_mask_pos == 8) &&
+      (CbFbRec->blue_mask_pos == 16)) {
     GfxMode->PixelFormat = PixelRedGreenBlueReserved8BitPerColor;
-  } else if ((CbFbRec->blue_mask_pos == 0) && (CbFbRec->green_mask_pos == 8) && (CbFbRec->red_mask_pos == 16)) {
-     GfxMode->PixelFormat = PixelBlueGreenRedReserved8BitPerColor;
+  } else if ((CbFbRec->blue_mask_pos == 0) && (CbFbRec->green_mask_pos == 8) &&
+             (CbFbRec->red_mask_pos == 16)) {
+    GfxMode->PixelFormat = PixelBlueGreenRedReserved8BitPerColor;
   }
-  GfxMode->PixelInformation.RedMask      = ((1 << CbFbRec->red_mask_size)      - 1) << CbFbRec->red_mask_pos;
-  GfxMode->PixelInformation.GreenMask    = ((1 << CbFbRec->green_mask_size)    - 1) << CbFbRec->green_mask_pos;
-  GfxMode->PixelInformation.BlueMask     = ((1 << CbFbRec->blue_mask_size)     - 1) << CbFbRec->blue_mask_pos;
-  GfxMode->PixelInformation.ReservedMask = ((1 << CbFbRec->reserved_mask_size) - 1) << CbFbRec->reserved_mask_pos;
+  GfxMode->PixelInformation.RedMask = ((1 << CbFbRec->red_mask_size) - 1)
+                                      << CbFbRec->red_mask_pos;
+  GfxMode->PixelInformation.GreenMask = ((1 << CbFbRec->green_mask_size) - 1)
+                                        << CbFbRec->green_mask_pos;
+  GfxMode->PixelInformation.BlueMask = ((1 << CbFbRec->blue_mask_size) - 1)
+                                       << CbFbRec->blue_mask_pos;
+  GfxMode->PixelInformation.ReservedMask =
+      ((1 << CbFbRec->reserved_mask_size) - 1) << CbFbRec->reserved_mask_pos;
 
   GfxInfo->FrameBufferBase = CbFbRec->physical_address;
-  GfxInfo->FrameBufferSize = CbFbRec->bytes_per_line *  CbFbRec->y_resolution;
+  GfxInfo->FrameBufferSize = CbFbRec->bytes_per_line * CbFbRec->y_resolution;
 
   return RETURN_SUCCESS;
 }
@@ -543,18 +581,16 @@ ParseGfxInfo (
 /**
   Find the video frame buffer device information
 
-  @param  GfxDeviceInfo      Pointer to the EFI_PEI_GRAPHICS_DEVICE_INFO_HOB structure
+  @param  GfxDeviceInfo      Pointer to the EFI_PEI_GRAPHICS_DEVICE_INFO_HOB
+structure
 
-  @retval RETURN_SUCCESS     Successfully find the video frame buffer information.
+  @retval RETURN_SUCCESS     Successfully find the video frame buffer
+information.
   @retval RETURN_NOT_FOUND   Failed to find the video frame buffer information.
 
 **/
 RETURN_STATUS
 EFIAPI
-ParseGfxDeviceInfo (
-  OUT EFI_PEI_GRAPHICS_DEVICE_INFO_HOB       *GfxDeviceInfo
-  )
-{
+ParseGfxDeviceInfo(OUT EFI_PEI_GRAPHICS_DEVICE_INFO_HOB *GfxDeviceInfo) {
   return RETURN_NOT_FOUND;
 }
-

@@ -136,7 +136,7 @@ INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 !if $(DISABLE_SERIAL_TERMINAL) == FALSE
 INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 !endif
-INF UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutputDxe.inf
+# INF UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutputDxe.inf
 
 #
 # SCSI/ATA/IDE/DISK Support
@@ -168,6 +168,20 @@ INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+
+#
+# Video
+#
+!ifdef $(CSM_ENABLE)
+INF  OvmfPkg/Csm/BiosThunk/VideoDxe/VideoDxe.inf
+INF  OvmfPkg/Csm/LegacyBiosDxe/LegacyBiosDxe.inf
+INF  RuleOverride=CSM OvmfPkg/Csm/Csm16/Csm16.inf
+!else
+INF  UefiPayloadPkg/QemuVideoDxe/QemuVideoDxe.inf
+!endif
+
+# INF  OvmfPkg/QemuRamfbDxe/QemuRamfbDxe.inf
+# INF  OvmfPkg/VirtioGpuDxe/VirtioGpu.inf
 
 
 #

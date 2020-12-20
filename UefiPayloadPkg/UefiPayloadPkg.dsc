@@ -216,6 +216,8 @@
   VarCheckLib|MdeModulePkg/Library/VarCheckLib/VarCheckLib.inf
   VariablePolicyLib|MdeModulePkg/Library/VariablePolicyLib/VariablePolicyLib.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
+  # UEFI Boot
+  MemEncryptSevLib|OvmfPkg/Library/BaseMemEncryptSevLib/BaseMemEncryptSevLib.inf
 
 [LibraryClasses.common.SEC]
   HobLib|UefiPayloadPkg/Library/HobLib/HobLib.inf
@@ -445,6 +447,7 @@
   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf {
     <LibraryClasses>
       PciHostBridgeLib|UefiPayloadPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf
+      # NULL|OvmfPkg/Library/PlatformHasIoMmuLib/PlatformHasIoMmuLib.inf
   }
 
   #
@@ -454,7 +457,8 @@
   MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   FatPkg/EnhancedFatDxe/Fat.inf
-  MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+  #MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+  OvmfPkg//SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
@@ -505,6 +509,10 @@
 !endif
   # OvmfPkg/QemuRamfbDxe/QemuRamfbDxe.inf
   # OvmfPkg/VirtioGpuDxe/VirtioGpu.inf
+  #
+  # Others
+  #
+  # OvmfPkg/IoMmuDxe/IoMmuDxe.inf
 
   #------------------------------
   #  Build the shell

@@ -8,6 +8,8 @@
 #include "UefiPayloadEntry.h"
 #include <Library/MtrrLib.h>
 
+#define PCIE_BASE 0xB0000000
+
 /**
    Callback function to build resource descriptor HOB
 
@@ -164,8 +166,10 @@ Done:
     AcpiBoardInfo->PcieBaseAddress = 0;
     AcpiBoardInfo->PcieBaseSize = 0;
   }
-    AcpiBoardInfo->PcieBaseAddress = 0x80000000;
-    AcpiBoardInfo->PcieBaseSize = 0x7EBFFFFF + 1;
+
+  AcpiBoardInfo->PcieBaseAddress = PCIE_BASE;
+  AcpiBoardInfo->PcieBaseSize = 0xFEFFFFFF  - PCIE_BASE;
+
   DEBUG((DEBUG_INFO, "PmCtrl  Reg 0x%lx\n", AcpiBoardInfo->PmCtrlRegBase));
   DEBUG((DEBUG_INFO, "PmTimer Reg 0x%lx\n", AcpiBoardInfo->PmTimerRegBase));
   DEBUG((DEBUG_INFO, "Reset   Reg 0x%lx\n", AcpiBoardInfo->ResetRegAddress));
@@ -384,7 +388,7 @@ PciExBarInitialization (
   // determined in AddressWidthInitialization(), i.e., 36 bits, will suffice
   // for DXE's page tables to cover the MMCONFIG area.
   //
-  PciExBarBase.Uint64 = 0x80000000;
+  PciExBarBase.Uint64 = PCIE_BASE;
   ASSERT ((PciExBarBase.Uint32[1] & MCH_PCIEXBAR_HIGHMASK) == 0);
   ASSERT ((PciExBarBase.Uint32[0] & MCH_PCIEXBAR_LOWMASK) == 0);
 
@@ -420,12 +424,14 @@ AddIoMemoryBaseSizeHob (
     MemorySize
     );
 }
+
 UINT32 mQemuUc32Base;
 
 /**
   Peform Memory Detection for QEMU / KVM
 
 **/
+/*
 STATIC
 VOID
 QemuInitializeRam (
@@ -491,7 +497,7 @@ QemuInitializeRam (
 
    AddIoMemoryBaseSizeHob (mQemuUc32Base, 0xFC000000 - mQemuUc32Base);
 }
-
+*/
 
 
 /**
@@ -551,7 +557,7 @@ PayloadEntry(IN UINTN BootloaderParameter) {
   // Disable A20 Mask
   //
   IoOr8 (0x92, BIT1);
-  QemuInitializeRam ();
+  // QemuInitializeRam ();
   PciExBarInitialization();
 
 

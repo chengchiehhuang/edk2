@@ -382,6 +382,30 @@ ParseMemoryInfo(IN BL_MEM_INFO_CALLBACK MemInfoCallback, IN VOID *Params) {
 */
 
   /*
+  w/ Ovmf
+  [mem 0x0000000000000000-0x000000000009ffff] usable
+  [mem 0x0000000000100000-0x00000000007fffff] usable
+  [mem 0x0000000000800000-0x0000000000807fff] ACPI NVS
+  [mem 0x0000000000808000-0x000000000080ffff] usable
+  [mem 0x0000000000810000-0x00000000008fffff] ACPI NVS
+  [mem 0x0000000000900000-0x000000007f8eefff] usable
+  [mem 0x000000007f8ef000-0x000000007fb6efff] reserved
+  [mem 0x000000007fb6f000-0x000000007fb7efff] ACPI data
+  [mem 0x000000007fb7f000-0x000000007fbfefff] ACPI NVS
+  [mem 0x000000007fbff000-0x000000007fef3fff] usable
+  [mem 0x000000007fef4000-0x000000007ff77fff] reserved
+  [mem 0x000000007ff78000-0x000000007fffffff] ACPI NVS
+  [mem 0x00000000b0000000-0x00000000bfffffff] reserved 
+  */
+  AddMemoryRange(MemInfoCallback, 0x0000000000000000, 0x000000000009ffff,
+                 CB_MEM_RAM);
+  AddMemoryRange(MemInfoCallback, 0x0000000000100000, 0x00000000007fffff,
+                 CB_MEM_RAM);
+  AddMemoryRange(MemInfoCallback, 0x0000000000100000, 0x00000000007fffff,
+                 CB_MEM_RAM);
+  AddMemoryRange(MemInfoCallback, 0x0000000000900000, 0x000000007f8eefff,
+                 CB_MEM_RAM);
+  /*
   w/ ubuntu
   [mem 0x0000000000000000-0x000000000009fbff] usable
   [mem 0x000000000009fc00-0x000000000009ffff] reserved
@@ -397,18 +421,18 @@ ParseMemoryInfo(IN BL_MEM_INFO_CALLBACK MemInfoCallback, IN VOID *Params) {
   [mem 0x000000007ffdd000-0x000000007fffffff] reserved
   [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
    * */
-  AddMemoryRange(MemInfoCallback, 0x0000000000000000, 0x000000000009efff,
-                 CB_MEM_RAM);
-  AddMemoryRange(MemInfoCallback, 0x000000000009f000, 0x000000000009ffff,
-                 CB_MEM_RESERVED);
-  AddMemoryRange(MemInfoCallback, 0x00000000000f0000, 0x00000000000fffff,
-                 CB_MEM_RESERVED);
+  // AddMemoryRange(MemInfoCallback, 0x0000000000000000, 0x000000000009efff,
+  //                CB_MEM_RAM);
+  // AddMemoryRange(MemInfoCallback, 0x000000000009f000, 0x000000000009ffff,
+  //                CB_MEM_RESERVED);
+  // AddMemoryRange(MemInfoCallback, 0x00000000000f0000, 0x00000000000fffff,
+  //                CB_MEM_RESERVED);
   // AddMemoryRange(MemInfoCallback, 0x0000000000100000, 0x000000007ffdcfff,
   //                CB_MEM_RAM);
   // AddMemoryRange(MemInfoCallback, 0x000000007ffdd000, 0x000000007fffffff,
   //                CB_MEM_RESERVED);
-  AddMemoryRange(MemInfoCallback, 0x0000000000100000, 0x000000007ffd9fff,
-                 CB_MEM_RAM);
+  // AddMemoryRange(MemInfoCallback, 0x0000000000100000, 0x000000007ffd9fff,
+  //               CB_MEM_RAM);
   AddMemoryRange(MemInfoCallback, 0x000000007ffda000, 0x000000007fffffff,
                  CB_MEM_RESERVED);
 
@@ -417,11 +441,31 @@ ParseMemoryInfo(IN BL_MEM_INFO_CALLBACK MemInfoCallback, IN VOID *Params) {
   return RETURN_SUCCESS;
 }
 
- // " RSD PTR" in hex, 8 bytes.
-UINTN FindRsdpPtrInF000(){
+ // Find _SM_ in memory in F0000
+UINTN FindRsdpPtrInLowMem(){
   UINTN base;
   const UINT64 RsdpTag = 0x2052545020445352;
   for (base = 0xF0000; base < 0x100000; base++) {
+    if (*(UINT64*)base == RsdpTag) {
+      DEBUG((DEBUG_INFO, "Found RSDP ptr in: 0x%08x\n", base));
+      return base;
+    }
+  }
+  DEBUG((DEBUG_INFO, "SMBIOS header is not found in F0000\n"));
+  return 0xf5b20;
+}
+
+ // " RSD PTR" in hex, 8 bytes.
+UINTN FindRsdpPtrInLowMem(){
+  UINTN base;
+  const UINT64 RsdpTag = 0x2052545020445352;
+  for (base = 0xE0000; base < 0x100000; base++) {
+    if (*(UINT64*)base == RsdpTag) {
+      DEBUG((DEBUG_INFO, "Found RSDP ptr in: 0x%08x\n", base));
+      return base;
+    }
+  }
+  for (base = 0x80000; base < 0xA0000; base++) {
     if (*(UINT64*)base == RsdpTag) {
       DEBUG((DEBUG_INFO, "Found RSDP ptr in: 0x%08x\n", base));
       return base;
@@ -448,10 +492,13 @@ ParseSystemTable(OUT SYSTEM_TABLE_INFO *SystemTableInfo) {
   UINT32 MemTableSize;
   UINTN RsdpPtr;
 
-  RsdpPtr = FindRsdpPtrInF000();
+  RsdpPtr = FindRsdpPtrInLowMem();
 
   SystemTableInfo->AcpiTableBase = RsdpPtr;
   SystemTableInfo->AcpiTableSize = 14;
+  SystemTableInfo->SmbiosTableBase = 0xf5b40;
+  SystemTableInfo->SmbiosTableSize = 0x1F;
+
   return RETURN_SUCCESS;
 
   Status = ParseCbMemTable(SIGNATURE_32('T', 'B', 'M', 'S'), &MemTable,

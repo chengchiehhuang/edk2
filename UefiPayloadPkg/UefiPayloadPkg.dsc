@@ -31,6 +31,7 @@
   #
   # SBL:      UEFI payload for Slim Bootloader
   # COREBOOT: UEFI payload for coreboot
+  # LINUXBOOT: UEFI payload for linuxboot
   #
   DEFINE   BOOTLOADER = SBL
 
@@ -204,6 +205,8 @@
   PlatformSupportLib|UefiPayloadPkg/Library/PlatformSupportLibNull/PlatformSupportLibNull.inf
 !if $(BOOTLOADER) == "COREBOOT"
   BlParseLib|UefiPayloadPkg/Library/CbParseLib/CbParseLib.inf
+!elseif $(BOOTLOADER) == "LINUXBOOT"
+  BlParseLib|UefiPayloadPkg/Library/LbParseLib/LbParseLib.inf
 !else
   BlParseLib|UefiPayloadPkg/Library/SblParseLib/SblParseLib.inf
 !endif

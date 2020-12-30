@@ -88,7 +88,7 @@
   DEFINE SHELL_TYPE                   = BUILD_SHELL
 
 [BuildOptions]
-  *_*_*_CC_FLAGS                 = -D DISABLE_NEW_DEPRECATED_INTERFACES
+  *_*_*_CC_FLAGS                 = -D DISABLE_NEW_DEPRECATED_INTERFACES -mno-mmx -mno-sse
   GCC:*_UNIXGCC_*_CC_FLAGS       = -DMDEPKG_NDEBUG
   GCC:RELEASE_*_*_CC_FLAGS       = -DMDEPKG_NDEBUG
   INTEL:RELEASE_*_*_CC_FLAGS     = /D MDEPKG_NDEBUG

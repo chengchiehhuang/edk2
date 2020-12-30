@@ -14,6 +14,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PciHostBridgeLib.h>
 #include <Library/PciLib.h>
 #include "PciHostBridge.h"
@@ -309,10 +310,21 @@ ScanForRootBridges (
   PCI_ROOT_BRIDGE_APERTURE Io, Mem, MemAbove4G, PMem, PMemAbove4G, *MemAperture;
   PCI_ROOT_BRIDGE *RootBridges;
   UINTN      BarOffsetEnd;
+  EFI_STATUS Status;
 
 
   *NumberOfRootBridges = 0;
   RootBridges = NULL;
+
+  //
+  // Set Host Bridge DID for Qemu
+  //
+  Address = PCI_LIB_ADDRESS (0, 0, 0, 0);
+  PciReadBuffer (Address, sizeof (Pci), &Pci);
+  Status = PcdSet16S (PcdOvmfHostBridgePciDevId, Pci.Hdr.DeviceId);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Uable to set PcdOvmfHostBridgePciDevId Status = %r\n", Status));
+  }
 
   //
   // After scanning all the PCI devices on the PCI root bridge's primary bus,

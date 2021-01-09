@@ -38,7 +38,7 @@
   #
   # CPU options
   #
-  DEFINE MAX_LOGICAL_PROCESSORS       = 64
+  DEFINE MAX_LOGICAL_PROCESSORS       = 256
 
   #
   # PCI options
@@ -399,7 +399,10 @@
       NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
   }
 
-  PcAtChipsetPkg/HpetTimerDxe/HpetTimerDxe.inf
+  # PcAtChipsetPkg/HpetTimerDxe/HpetTimerDxe.inf
+  OvmfPkg/8254TimerDxe/8254Timer.inf
+  OvmfPkg/8259InterruptControllerDxe/8259.inf
+
   MdeModulePkg/Universal/Metronome/Metronome.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
@@ -442,7 +445,7 @@
   # PCI Support
   #
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
-  MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf {
+   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf {
     <LibraryClasses>
       PciHostBridgeLib|UefiPayloadPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf
   }

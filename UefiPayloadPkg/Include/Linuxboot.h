@@ -29,6 +29,7 @@ typedef struct MemoryMapEntryStruct {
 } MemoryMapEntry;
 
 typedef struct UefiPayloadConfigStruct {
+  UINT64 Version;
   UINT64 AcpiBase;
   UINT64 AcpiSize;
   UINT64 SmbiosBase;
@@ -38,6 +39,8 @@ typedef struct UefiPayloadConfigStruct {
   MemoryMapEntry MemoryMapEntries[0];
 } UefiPayloadConfig;
 #pragma pack()
+
+#define UEFI_PAYLOAD_CONFIG_VERSION 1
 
 #define LINUXBOOT_MEM_RAM 1
 #define LINUXBOOT_MEM_DEFAULT 2

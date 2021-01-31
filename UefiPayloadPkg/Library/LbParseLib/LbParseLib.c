@@ -21,7 +21,14 @@ required information.
 
 // Retrieve UefiPayloadConfig from Linuxboot's uefiboot
 UefiPayloadConfig* GetUefiPayLoadConfig() {
-  return  (UefiPayloadConfig*)(UINTN)(PcdGet32(PcdPayloadFdMemBase) - SIZE_64KB);
+  UefiPayloadConfig* config =
+      (UefiPayloadConfig*)(UINTN)(PcdGet32(PcdPayloadFdMemBase) - SIZE_64KB);
+  if (config->Version != UEFI_PAYLOAD_CONFIG_VERSION) {
+    DEBUG((DEBUG_ERROR, "Expect payload config version: %d, but get %d\n",
+           UEFI_PAYLOAD_CONFIG_VERSION, config->Version));
+    CpuDeadLoop ();
+  }
+  return config;
 }
 
 // Align the address and add memory rang to MemInfoCallback
